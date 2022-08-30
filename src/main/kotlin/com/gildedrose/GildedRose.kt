@@ -3,97 +3,96 @@ package com.gildedrose
 class GildedRose(var items: Array<Item>) {
 
     fun updateQuality() {
-        for (i in items.indices) {
-            if (notAgedBrie(i) && notBackStage(i)) {
-                if (items[i].quality > 0) {
-                    if (notSulfuras(i)) {
-                        decreaseQuality(i)
-                        decreaseQualityConjured(i)
-                    }
-                }
-            } else {
-                if (notMaxQuality(i)) {
-                    increaseQuality(i)
-
-                    manageBackStageExtraQuality(i)
-                }
-            }
-
-            if (notSulfuras(i)) {
-                decreaseSellIn(i)
-            }
-
-            if (sellDateExceeded(i)) {
-                if (notAgedBrie(i)) {
-                    if (notBackStage(i)) {
-                        if (items[i].quality > 0) {
-                            if (notSulfuras(i)) {
-                                decreaseQuality(i)
-                                decreaseQualityConjured(i)
-                            }
-                        }
-                    } else {
-                        setQualityToZero(i)
-                    }
-                } else {
-                    if (notMaxQuality(i)) {
-                        increaseQuality(i)
-                    }
-                }
+        for (item in items) {
+            when {
+                isSulfuras(item) -> break
+                isAgedBrie(item) -> manageAgedBrie(item)
+                isBackStage(item) -> manageBackStage(item)
+                isConjuredItem(item) -> manageConjuredItem(item)
+                else -> manageCommonItem(item)
             }
         }
     }
 
-    private fun decreaseQualityConjured(i: Int) {
-        if (conjuredItem(i))
-            decreaseQuality(i)
+
+    private fun decreaseSellIn(item: Item) {
+        item.sellIn = item.sellIn - 1
     }
 
-    private fun sellDateExceeded(i: Int) = items[i].sellIn < 0
-
-    private fun decreaseSellIn(i: Int) {
-        items[i].sellIn = items[i].sellIn - 1
+    private fun decreaseQuality(item: Item) {
+        item.quality = item.quality - 1
     }
 
-    private fun decreaseQuality(i: Int) {
-        items[i].quality = items[i].quality - 1
+    private fun manageBackStage(item: Item) {
+        increaseQuality(item)
+
+        if (sellInExceeded(item))
+            setQualityToZero(item)
+        else {
+            if (item.sellIn < 11)
+                increaseQuality(item)
+            if (item.sellIn < 6)
+                increaseQuality(item)
+            controlMaxQuality(item)
+        }
+        decreaseSellIn(item)
     }
 
-    private fun manageBackStageExtraQuality(i: Int) {
-        if (backStage(i)) {
-            if (items[i].sellIn < 11) {
-                if (notMaxQuality(i)) {
-                    increaseQuality(i)
-                }
-            }
+    private fun controlMaxQuality(item: Item) {
+        if (item.quality > 50) item.quality = 50
+    }
 
-            if (items[i].sellIn < 6) {
-                if (notMaxQuality(i)) {
-                    increaseQuality(i)
-                }
-            }
+    private fun manageCommonItem(item: Item) {
+        decreaseQuality(item)
+        manageDateSellInExceeded(item)
+        controlMinimunQuality(item)
+        decreaseSellIn(item)
+    }
+
+    private fun controlMinimunQuality(item: Item) {
+        if (item.quality < 0) item.quality = 0
+    }
+
+    private fun manageDateSellInExceeded(item: Item) {
+        if (sellInExceeded(item)) {
+            decreaseQuality(item)
         }
     }
 
-    private fun setQualityToZero(i: Int) {
-        items[i].quality = items[i].quality - items[i].quality
+    private fun sellInExceeded(item: Item) = item.sellIn <= 0
+
+    private fun manageAgedBrie(item: Item) {
+        if (item.quality < 50) {
+            item.quality += 1
+        }
+        decreaseSellIn(item)
     }
 
-    private fun increaseQuality(i: Int) {
-        items[i].quality = items[i].quality + 1
+    private fun setQualityToZero(item: Item) {
+        item.quality = 0
     }
 
-    private fun notMaxQuality(i: Int) = items[i].quality < 50
+    private fun increaseQuality(item: Item) {
+        item.quality = item.quality + 1
+    }
+    private fun isSulfuras(item: Item) = item.name == "Sulfuras, Hand of Ragnaros"
 
-    private fun backStage(i: Int) = items[i].name == "Backstage passes to a TAFKAL80ETC concert"
+    private fun isBackStage(item: Item) = item.name == "Backstage passes to a TAFKAL80ETC concert"
 
-    private fun notSulfuras(i: Int) = items[i].name != "Sulfuras, Hand of Ragnaros"
+    private fun isAgedBrie(item: Item) = item.name == "Aged Brie"
 
-    private fun notBackStage(i: Int) = items[i].name != "Backstage passes to a TAFKAL80ETC concert"
+    private fun isConjuredItem(item: Item) = item.name == "Conjured Mana Cake"
 
-    private fun notAgedBrie(i: Int) = items[i].name != "Aged Brie"
+    private fun manageConjuredItem(item: Item) {
+        decreaseQuality(item)
+        decreaseQuality(item)
+        manageDateSellInExceeded(item)
+        manageDateSellInExceeded(item)
+        controlMinimunQuality(item)
 
-    private fun conjuredItem(i: Int) = items[i].name == "Conjured Mana Cake"
+        decreaseSellIn(item)
+
+    }
 
 }
 
